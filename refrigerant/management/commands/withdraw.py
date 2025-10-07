@@ -17,28 +17,23 @@ class Command(BaseCommand):
     def run_simulation(self, vessel_id):
         barrier = threading.Barrier(2)
 
-        def user1():
+        def withdraw(amount, thread_name): # use withdraw function instead of user 1/2 functions to improve the code
             barrier.wait()
-            with transaction.atomic():
+            with transaction.atomic(): # db transaction for safety
                 vessel = Vessel.objects.select_for_update().get(id=vessel_id) # lock vessel row during runtime, prevent concurrent changes
-                vessel.content = max(vessel.content - 10.0, 0) # avoid negative value
+                if vessel.content <= 0: # avoid negative value with if check
+                    print(f"{thread_name}: Vessel is empty, cannot withdraw!")
+                    return
+                vessel.content = max(vessel.content - amount, 0)
                 vessel.save()
-            print("Thread 1 passed successfully!") # check if thread 1 ends successfully
+                print(f"{thread_name}: Successfully withdrew {amount} kg. Remaining: {vessel.content} kg")
 
-        def user2():
-            barrier.wait()
-            with transaction.atomic():
-                vessel = Vessel.objects.select_for_update().get(id=vessel_id) # lock vessel row during runtime, prevent concurrent changes
-                vessel.content = max(vessel.content - 10.0, 0) # avoid negative value
-                vessel.save()
-            print("Thread 2 passed successfully!") # check if thread 2 ends successfully
-
-        t1 = threading.Thread(target=user1)
-        t2 = threading.Thread(target=user2)
+        t1 = threading.Thread(target=withdraw, args=(10.0, "Thread/User 1"))
+        t2 = threading.Thread(target=withdraw, args=(10.0, "Thread/User 2"))
         t1.start()
         t2.start()
         t1.join()
         t2.join()
 
         vessel = Vessel.objects.get(id=vessel_id)
-        self.stdout.write(f"Remaining content: {vessel.content} kg")
+        self.stdout.write(f"Simulation complete. Remaining content: {vessel.content} kg")
