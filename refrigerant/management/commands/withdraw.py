@@ -19,7 +19,7 @@ class Command(BaseCommand):
             barrier.wait()
             with transaction.atomic():
                 vessel = Vessel.objects.select_for_update().get(id=1) # lock vessel row during runtime, prevent concurrent changes
-                vessel.content -= 10.0
+                vessel.content = max(vessel.content - 10.0, 0) # avoid negative value
                 vessel.save()
         print("Thread 1 passed successfully!") # check if thread 1 ends successfully
 
@@ -27,7 +27,7 @@ class Command(BaseCommand):
             barrier.wait()
             with transaction.atomic():
                 vessel = Vessel.objects.select_for_update().get(id=1) # lock vessel row during runtime, prevent concurrent changes
-                vessel.content -= 10.0
+                vessel.content = max(vessel.content - 10.0, 0) # avoid negative value
                 vessel.save()
         print("Thread 2 passed successfully!") # check if thread 2 ends successfully
 
