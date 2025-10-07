@@ -18,12 +18,15 @@ class Command(BaseCommand):
             barrier.wait()
             vessel = Vessel.objects.get(id=1)
             vessel.content -= 10.0
+            print("Thread 1 passed successfully!") # check if thread 1 ends successfully
             vessel.save()
 
         def user2():
             barrier.wait()
             vessel = Vessel.objects.get(id=1)
             vessel.content -= 10.0
+            print("Thread 2 passed successfully!") # check if thread 2 ends successfully
+
             vessel.save()
 
         t1 = threading.Thread(target=user1)
