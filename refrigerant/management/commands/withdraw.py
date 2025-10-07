@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from ...models import Vessel
 import threading
+from django.db import transaction
 
 
 class Command(BaseCommand):
@@ -16,18 +17,19 @@ class Command(BaseCommand):
 
         def user1():
             barrier.wait()
-            vessel = Vessel.objects.get(id=1)
-            vessel.content -= 10.0
-            print("Thread 1 passed successfully!") # check if thread 1 ends successfully
-            vessel.save()
+            with transaction.atomic():
+                vessel = Vessel.objects.select_for_update().get(id=1) # lock vessel row during runtime, prevent concurrent changes
+                vessel.content -= 10.0
+                vessel.save()
+        print("Thread 1 passed successfully!") # check if thread 1 ends successfully
 
         def user2():
             barrier.wait()
-            vessel = Vessel.objects.get(id=1)
-            vessel.content -= 10.0
-            print("Thread 2 passed successfully!") # check if thread 2 ends successfully
-
-            vessel.save()
+            with transaction.atomic():
+                vessel = Vessel.objects.select_for_update().get(id=1) # lock vessel row during runtime, prevent concurrent changes
+                vessel.content -= 10.0
+                vessel.save()
+        print("Thread 2 passed successfully!") # check if thread 2 ends successfully
 
         t1 = threading.Thread(target=user1)
         t2 = threading.Thread(target=user2)
