@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = "Simulate condition when withdrawing refrigerant from a vessel."
 
     def handle(self, *args, **kwargs):
-        Vessel.objects.all().delete() # delete garbage
+        Vessel.objects.all().delete() # delete garbage data
         vessel = Vessel.objects.create(name="Test Vessel", content=50.0)
         vessel_id = vessel.id # avoid hardcoded vessel id (error: refrigerant.models.Vessel.DoesNotExist: Vessel matching query does not exist. ), auto-increment in db (rows probably deleted by line 11)
         self.stdout.write("Simulating condition...")
